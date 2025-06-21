@@ -28,19 +28,6 @@ class LeetcodeTask:
     comment: str  # shot explanation
 
 
-@tool
-def select_random_leetcode_task() -> LeetcodeTask:
-    """Returns random leetcode task"""
-    leetcode_tasks = convert_file_to_object_list()
-    random_task = random.choice(leetcode_tasks)
-    return random_task
-
-
-def update_leet_code_task(task_id: int, difficulty: str, count: int, type: str, comment: str) -> None:
-    """Updates leetcode task"""
-    None
-
-
 def convert_file_to_object_list() -> list[LeetcodeTask]:
     with open(FILE, 'r', encoding='utf-8') as file:
         table = file.read()
@@ -71,7 +58,49 @@ def convert_file_to_object_list() -> list[LeetcodeTask]:
     ]
 
 
-tools = [select_random_leetcode_task]
+def convert_object_list_to_file(task_list: list[LeetcodeTask], file_path: str) -> None:
+    # Create the header and separator
+    header = "| N | Problem | Difficulty | Count | Type | Comment |"
+    separator = "|---|---|---|---|---|---|"
+
+    # Prepare the data rows
+    data_rows = []
+    for task in task_list:
+        data_rows.append(
+            f"| {task.id} | {task.link} | {task.difficulty} | {task.count} | {task.type} | {task.comment} |"
+        )
+
+    # Combine header, separator, and data rows into a single string
+    content = "\n".join([header, separator] + data_rows)
+
+    # Write the content to the specified file
+    with open(file_path, 'w', encoding='utf-8') as file:
+        file.write(content)
+
+
+@tool
+def select_random_leetcode_task(task_list: list[LeetcodeTask]) -> LeetcodeTask:
+    """
+    Returns random leetcode task
+
+    Args:
+        task_list (Customer): provided list of LeetCode tasks
+    """
+    return random.choice(task_list)
+
+
+@tool
+def update_leet_code_task_list(updated_leetcode_task_list: list[LeetcodeTask]) -> None:
+    """
+    Updates leetcode task
+    Args:
+        updated_leetcode_task_list (list[LeetcodeTask]): list of leetcode tasks to update
+    """
+    print("Updating leetcode task list... {}".format(updated_leetcode_task_list))
+    convert_object_list_to_file(updated_leetcode_task_list, FILE)
+
+
+tools = [select_random_leetcode_task, update_leet_code_task_list]
 
 
 class LLMAgent:
@@ -107,13 +136,22 @@ def get_user_prompt() -> str:
 
 
 def main():
+    leetcode_tasks = convert_file_to_object_list()
+
     system_prompt = """
         Your task is to select LeetCode tasks.
         You need to show the link, difficulty, and count.
         Do not show comments and types until I ask you.
+        
+        Also, when I say that I finished a task, 
+        you need to increment the count of that task and update the list of tasks.
+        
+        Below, I am sending you a list of completed LeetCode tasks:
+        
+        {leetcode_tasks}
 
         So, give me a random LeetCode task.
-    """
+    """.format(leetcode_tasks=leetcode_tasks)
 
     chat = ChatCohere()
 
