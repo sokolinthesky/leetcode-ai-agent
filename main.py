@@ -24,34 +24,37 @@ class LeetcodeTask:
     id: int
     link: str  # link to leetcode platform
     difficulty: str  # task difficulty
-    count: str  # how many times was solved/repeated
+    count: int  # how many times was solved/repeated
     type: str  # type of task, ex: Array, Dynamic programming...
     comment: str  # shot explanation
 
 
+leetcode_tasks_map = {int(t.id): t for t in convert_file_to_object_list(FILE, LeetcodeTask)}
+
+
 @tool
-def select_random_leetcode_task(task_list: list[LeetcodeTask]) -> LeetcodeTask:
+def select_random_leetcode_task() -> LeetcodeTask:
     """
     Returns random leetcode task
-
-    Args:
-        task_list (Customer): provided list of LeetCode tasks
     """
-    return random.choice(task_list)
+    key = random.choice(list(leetcode_tasks_map.keys()))
+    return leetcode_tasks_map[key]
 
 
 @tool
-def update_leet_code_task_list(updated_leetcode_task_list: list[LeetcodeTask]) -> None:
+def update_leet_code_task(leetcode_task: LeetcodeTask) -> None:
     """
     Updates leetcode task
+
     Args:
-        updated_leetcode_task_list (list[LeetcodeTask]): list of leetcode tasks to update
+        leetcode_task: (LeetcodeTask) task to update
     """
-    print("Updating leetcode task list... {}".format(updated_leetcode_task_list))
-    convert_object_list_to_file(updated_leetcode_task_list, FILE, [field.name for field in fields(LeetcodeTask)])
+    print("Updating leetcode task {}".format(leetcode_task))
+    leetcode_tasks_map[leetcode_task.id] = leetcode_task
+    convert_object_list_to_file(list(leetcode_tasks_map.values()), FILE, [field.name for field in fields(LeetcodeTask)])
 
 
-tools = [select_random_leetcode_task, update_leet_code_task_list]
+tools = [select_random_leetcode_task, update_leet_code_task]
 
 
 class LLMAgent:
@@ -87,22 +90,21 @@ def get_user_prompt() -> str:
 
 
 def main():
-    leetcode_tasks = convert_file_to_object_list(FILE, LeetcodeTask)
-
     system_prompt = """
-        Your task is to select LeetCode tasks.
-        You need to show the link, difficulty, and count.
-        Do not show comments and types until I ask you.
+        Your task is to select LeetCode problems.
+        You need to show the "id", "link", "difficulty", and "count".
+        Remember "comment" and "type," but show them only when I ask.
+        Also, you can use them ("type", "comment") if you need this data for function invocation.
+        Don't invent any data; strictly use the data returned by function.
         
-        Also, when I say that I finished a task, 
-        you need to increment the count of that task and update the list of tasks.
+        Additionally, when I say that I have finished a task, 
+        you need to increment the count of that task and update it.
         
-        Below, I am sending you a list of completed LeetCode tasks:
-        
-        {leetcode_tasks}
+        If a task doesn't have "comment," "type," or "difficulty," or if they are empty, 
+        you can ask me to fill them in. 
 
-        So, give me a random LeetCode task.
-    """.format(leetcode_tasks=leetcode_tasks)
+        Now, please give me a random LeetCode task.
+    """
 
     chat = ChatCohere()
 

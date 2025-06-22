@@ -36,7 +36,7 @@ def convert_file_to_object_list(file_path: str, constructor: callable) -> List[T
 
 def convert_object_list_to_file(task_list: List[T], file_path: str, attributes: List[str]) -> None:
     # Create the header and separator
-    header = "| " + " | ".join(attributes) + " |"
+    header = "| " + " | ".join(["N", "Problem", "Difficulty", "Count", "Type", "Comment"]) + " |"
     separator = "|---" + "|---" * (len(attributes) - 1) + "|"
 
     # Prepare the data rows
