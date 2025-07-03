@@ -1,3 +1,4 @@
+from enum import Enum, auto
 import random
 import uuid
 from dataclasses import dataclass, fields
@@ -18,12 +19,19 @@ load_dotenv()
 FILE = "example.md"
 
 
+class Difficulty(Enum):
+    LOW = "Easy"
+    MEDIUM = "Medium"
+    HARD = "Hard"
+    ANY = "Any"
+
+
 @dataclass
 class LeetcodeTask:
     """Leetcode task"""
     id: int
-    link: str  # link to leetcode platform
     difficulty: str  # task difficulty
+    link: str  # link to leetcode platform
     count: int  # how many times was solved/repeated
     type: str  # type of task, ex: Array, Dynamic programming...
     comment: str  # shot explanation
@@ -33,12 +41,19 @@ leetcode_tasks_map = {int(t.id): t for t in convert_file_to_object_list(FILE, Le
 
 
 @tool
-def select_random_leetcode_task() -> LeetcodeTask:
+def select_random_leetcode_task(difficulty: Difficulty) -> LeetcodeTask:
     """
     Returns random leetcode task
+
+    Args:
+        difficulty (Difficulty): required difficulty of the task, use 'Any' if a difficulty does not matter
     """
-    key = random.choice(list(leetcode_tasks_map.keys()))
-    return leetcode_tasks_map[key]
+
+    filtered_tasks = leetcode_tasks_map if Difficulty.ANY == difficulty else {tid: t for tid, t in
+                                                                              leetcode_tasks_map.items() if
+                                                                              t.difficulty == difficulty.value}
+    key = random.choice(list(filtered_tasks.keys()))
+    return filtered_tasks[key]
 
 
 @tool
@@ -92,9 +107,13 @@ def get_user_prompt() -> str:
 def main():
     system_prompt = """
         Your task is to select LeetCode problems.
+        
+        Default difficulty is 'Any'.
+        
         You need to show the "id", "link", "difficulty", and "count".
-        Remember "comment" and "type," but show them only when I ask.
-        Also, you can use them ("type", "comment") if you need this data for function invocation.
+        Don't print "comment" and "type" of the task until I ask you, just remember them. 
+        You should use all task properties if you need this data for the function invocation.
+        
         Don't invent any data; strictly use the data returned by function.
         
         Additionally, when I say that I have finished a task, 
