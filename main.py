@@ -20,7 +20,7 @@ FILE = "example.md"
 
 
 class Difficulty(Enum):
-    LOW = "Easy"
+    EASY = "Easy"
     MEDIUM = "Medium"
     HARD = "Hard"
     ANY = "Any"
@@ -57,7 +57,7 @@ def select_random_leetcode_task(difficulty: Difficulty) -> LeetcodeTask:
 
 
 @tool
-def update_leet_code_task(leetcode_task: LeetcodeTask) -> None:
+def update_leetcode_task(leetcode_task: LeetcodeTask) -> None:
     """
     Updates leetcode task
 
@@ -69,7 +69,29 @@ def update_leet_code_task(leetcode_task: LeetcodeTask) -> None:
     convert_object_list_to_file(list(leetcode_tasks_map.values()), FILE, [field.name for field in fields(LeetcodeTask)])
 
 
-tools = [select_random_leetcode_task, update_leet_code_task]
+@tool
+def add_leetcode_task(leetcode_task: LeetcodeTask) -> None:
+    """
+    Adds new leetcode task
+
+    Args:
+        leetcode_task: (LeetcodeTask) task to add
+    """
+    leetcode_tasks_map[leetcode_task.id] = leetcode_task
+    convert_object_list_to_file(list(leetcode_tasks_map.values()), FILE, [field.name for field in fields(LeetcodeTask)])
+
+
+@tool
+def get_new_leetcode_task_id() -> int:
+    """
+    Returns an id for a new leetcode task
+
+    :return: new id for a new leetcode task
+    """
+    return len(leetcode_tasks_map) + 1
+
+
+tools = [select_random_leetcode_task, update_leetcode_task, add_leetcode_task, get_new_leetcode_task_id]
 
 
 class LLMAgent:
@@ -121,6 +143,9 @@ def main():
         
         If a task doesn't have "comment," "type," or "difficulty," or if they are empty, 
         you can ask me to fill them in. 
+        
+        Also, you should add a new LeetCode task when I ask. I will provide you with all the data. 
+        If something is missing, leave it empty (use empty string: "").
 
         Now, please give me a random LeetCode task.
     """
